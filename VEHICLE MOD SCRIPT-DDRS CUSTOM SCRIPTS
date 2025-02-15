@@ -204,6 +204,16 @@ elseif game.PlaceId == 5232896677 then
 	local pacificoPage = Venyx:addPage("Pacifico", 3028235557)
 end
 local infoPage = Venyx:addPage("Information", 8356778308)
+local toggleSection = infoPage:addSection("Menu Toggle")
+toggleSection:addToggle("Show/Hide Menu with Left Control", true, function(v)
+    if v then
+        UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+            if input.KeyCode == Enum.KeyCode.LeftControl and not gameProcessedEvent then
+                Venyx:toggle()
+            end
+        end)
+    end
+end)
 local discordSection = infoPage:addSection("Discord")
 discordSection:addButton(syn and "Join the Discord server" or "Copy Discord Link", function()
 	if syn then
