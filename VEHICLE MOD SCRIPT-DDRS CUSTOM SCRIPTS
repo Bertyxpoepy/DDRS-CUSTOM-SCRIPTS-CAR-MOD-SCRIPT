@@ -182,6 +182,22 @@ if game.PlaceId == 3351674303 then
 	end)
 elseif game.PlaceId == 891852901 then
 	local greenvillePage = Venyx:addPage("Greenville", 8360925727)
+    local greenvilleSection = greenvillePage:addSection("Teleports")
+
+greenvilleSection:addButton("Teleport to dealership", function()
+    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1579.4249267578125, -78.44871520996094, -11402.23828125)
+end)
+    greenvilleSection:addButton("Teleport to Drag Race Airport", function()
+    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(5141.60205078125, -78.85209655761719, -8920.84765625)
+end)
+
+greenvilleSection:addButton("Teleport to Gas Station Burger Knight", function()
+    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(4343.11181640625, -78.70198059082031, -10984.560546875)
+end)
+
+greenvilleSection:addButton("Teleport to Tires Plus", function()
+    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(4035.7548828125, -78.8255844116211, -11537.9189453125)
+end)
 elseif game.PlaceId == 54865335 then
 	local ultimateDrivingPage = Venyx:addPage("Westover", 8360954483)
 elseif game.PlaceId == 5232896677 then
