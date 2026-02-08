@@ -1,23 +1,894 @@
-print 'hello world!'local VenyxLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/Documantation12/Universal-Vehicle-Script/main/Library.lua"))()
-local Venyx = VenyxLibrary.new("VEHICLE MOD SCRIPT BY DDRS CUSTOMS", 5013109572)
+-- ============================================
+-- DDRS CUSTOMS - MODERN UI LIBRARY (EMBEDDED)
+-- ============================================
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local Library = {}
+
+-- Modern Color Palette (Cyberpunk Neon)
+local Colors = {
+	Background = Color3.fromRGB(10, 10, 15),
+	BackgroundLight = Color3.fromRGB(20, 20, 30),
+	Glass = Color3.fromRGB(30, 30, 45),
+	Accent = Color3.fromRGB(0, 255, 200), -- Cyan neon
+	AccentDark = Color3.fromRGB(0, 180, 140),
+	Secondary = Color3.fromRGB(255, 50, 150), -- Pink neon
+	Text = Color3.fromRGB(240, 240, 255),
+	TextDim = Color3.fromRGB(150, 150, 170),
+	Border = Color3.fromRGB(0, 255, 200),
+	Success = Color3.fromRGB(100, 255, 100),
+	Warning = Color3.fromRGB(255, 200, 0),
+	Danger = Color3.fromRGB(255, 60, 100)
+}
+
+-- Utility Functions
+local function CreateGlow(parent, color, intensity)
+	local glow = Instance.new("ImageLabel")
+	glow.Name = "Glow"
+	glow.BackgroundTransparency = 1
+	glow.Image = "rbxasset://textures/ui/Glow.png"
+	glow.ImageColor3 = color or Colors.Accent
+	glow.ImageTransparency = 0.5
+	glow.Size = UDim2.new(1, 50, 1, 50)
+	glow.Position = UDim2.new(0, -25, 0, -25)
+	glow.ZIndex = 0
+	glow.Parent = parent
+	return glow
+end
+
+local function CreateCorner(parent, radius)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, radius or 12)
+	corner.Parent = parent
+	return corner
+end
+
+local function CreateStroke(parent, color, thickness)
+	local stroke = Instance.new("UIStroke")
+	stroke.Color = color or Colors.Border
+	stroke.Thickness = thickness or 2
+	stroke.Transparency = 0.3
+	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+	stroke.Parent = parent
+	return stroke
+end
+
+local function CreateGradient(parent, color1, color2, rotation)
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, color1),
+		ColorSequenceKeypoint.new(1, color2)
+	}
+	gradient.Rotation = rotation or 90
+	gradient.Parent = parent
+	return gradient
+end
+
+local function SmoothTween(object, properties, duration, style)
+	local tween = TweenService:Create(
+		object,
+		TweenInfo.new(duration or 0.3, style or Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+		properties
+	)
+	tween:Play()
+	return tween
+end
+
+-- Main Library Constructor
+function Library.new(title, iconId)
+	local GUI = {}
+	GUI.Pages = {}
+	GUI.CurrentPage = nil
+	
+	-- Create ScreenGui
+	local ScreenGui = Instance.new("ScreenGui")
+	ScreenGui.Name = "DDRSCustomsUI"
+	ScreenGui.ResetOnSpawn = false
+	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	ScreenGui.Parent = game:GetService("CoreGui")
+	
+	-- Main Container (Glassmorphism style)
+	local MainFrame = Instance.new("Frame")
+	MainFrame.Name = "MainFrame"
+	MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+	MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+	MainFrame.Size = UDim2.new(0, 700, 0, 500)
+	MainFrame.BackgroundColor3 = Colors.Glass
+	MainFrame.BackgroundTransparency = 0.15
+	MainFrame.BorderSizePixel = 0
+	MainFrame.ClipsDescendants = false
+	MainFrame.Parent = ScreenGui
+	
+	CreateCorner(MainFrame, 20)
+	CreateStroke(MainFrame, Colors.Accent, 2)
+	CreateGlow(MainFrame, Colors.Accent, 1)
+	
+	-- Backdrop Blur Effect (simulated with overlay)
+	local BlurOverlay = Instance.new("Frame")
+	BlurOverlay.Name = "BlurOverlay"
+	BlurOverlay.Size = UDim2.new(1, 0, 1, 0)
+	BlurOverlay.BackgroundColor3 = Colors.BackgroundLight
+	BlurOverlay.BackgroundTransparency = 0.3
+	BlurOverlay.BorderSizePixel = 0
+	BlurOverlay.ZIndex = 0
+	BlurOverlay.Parent = MainFrame
+	CreateCorner(BlurOverlay, 20)
+	
+	-- Animated gradient overlay
+	local GradientOverlay = Instance.new("Frame")
+	GradientOverlay.Name = "GradientOverlay"
+	GradientOverlay.Size = UDim2.new(1, 0, 1, 0)
+	GradientOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	GradientOverlay.BackgroundTransparency = 0.9
+	GradientOverlay.BorderSizePixel = 0
+	GradientOverlay.ZIndex = 1
+	GradientOverlay.Parent = MainFrame
+	CreateCorner(GradientOverlay, 20)
+	
+	local animGradient = CreateGradient(GradientOverlay, Colors.Accent, Colors.Secondary, 45)
+	
+	-- Animate gradient rotation
+	spawn(function()
+		while true do
+			for i = 0, 360, 2 do
+				if not MainFrame.Parent then break end
+				animGradient.Rotation = i
+				task.wait(0.05)
+			end
+		end
+	end)
+	
+	-- Title Bar
+	local TitleBar = Instance.new("Frame")
+	TitleBar.Name = "TitleBar"
+	TitleBar.Size = UDim2.new(1, 0, 0, 60)
+	TitleBar.BackgroundColor3 = Colors.BackgroundLight
+	TitleBar.BackgroundTransparency = 0.2
+	TitleBar.BorderSizePixel = 0
+	TitleBar.ZIndex = 2
+	TitleBar.Parent = MainFrame
+	CreateCorner(TitleBar, 20)
+	
+	local TitleStroke = CreateStroke(TitleBar, Colors.Accent, 2)
+	TitleStroke.Transparency = 0.5
+	
+	-- Title Icon
+	local TitleIcon = Instance.new("ImageLabel")
+	TitleIcon.Name = "Icon"
+	TitleIcon.Position = UDim2.new(0, 20, 0.5, 0)
+	TitleIcon.AnchorPoint = Vector2.new(0, 0.5)
+	TitleIcon.Size = UDim2.new(0, 35, 0, 35)
+	TitleIcon.BackgroundTransparency = 1
+	TitleIcon.Image = "rbxassetid://" .. (iconId or 0)
+	TitleIcon.ImageColor3 = Colors.Accent
+	TitleIcon.Parent = TitleBar
+	
+	-- Animated icon glow
+	spawn(function()
+		while true do
+			if not TitleIcon.Parent then break end
+			SmoothTween(TitleIcon, {ImageColor3 = Colors.Secondary}, 1.5, Enum.EasingStyle.Sine)
+			task.wait(1.5)
+			SmoothTween(TitleIcon, {ImageColor3 = Colors.Accent}, 1.5, Enum.EasingStyle.Sine)
+			task.wait(1.5)
+		end
+	end)
+	
+	-- Title Text
+	local TitleLabel = Instance.new("TextLabel")
+	TitleLabel.Name = "Title"
+	TitleLabel.Position = UDim2.new(0, 65, 0.5, 0)
+	TitleLabel.AnchorPoint = Vector2.new(0, 0.5)
+	TitleLabel.Size = UDim2.new(1, -130, 1, 0)
+	TitleLabel.BackgroundTransparency = 1
+	TitleLabel.Font = Enum.Font.GothamBold
+	TitleLabel.Text = title or "DDRS CUSTOMS"
+	TitleLabel.TextColor3 = Colors.Text
+	TitleLabel.TextSize = 20
+	TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	TitleLabel.Parent = TitleBar
+	
+	-- Close Button
+	local CloseButton = Instance.new("TextButton")
+	CloseButton.Name = "CloseButton"
+	CloseButton.Position = UDim2.new(1, -50, 0.5, 0)
+	CloseButton.AnchorPoint = Vector2.new(0.5, 0.5)
+	CloseButton.Size = UDim2.new(0, 35, 0, 35)
+	CloseButton.BackgroundColor3 = Colors.Danger
+	CloseButton.BackgroundTransparency = 0.3
+	CloseButton.BorderSizePixel = 0
+	CloseButton.Font = Enum.Font.GothamBold
+	CloseButton.Text = "✕"
+	CloseButton.TextColor3 = Colors.Text
+	CloseButton.TextSize = 18
+	CloseButton.Parent = TitleBar
+	CreateCorner(CloseButton, 8)
+	CreateStroke(CloseButton, Colors.Danger, 2)
+	
+	CloseButton.MouseEnter:Connect(function()
+		SmoothTween(CloseButton, {BackgroundTransparency = 0, BackgroundColor3 = Color3.fromRGB(255, 80, 120)}, 0.2)
+	end)
+	
+	CloseButton.MouseLeave:Connect(function()
+		SmoothTween(CloseButton, {BackgroundTransparency = 0.3, BackgroundColor3 = Colors.Danger}, 0.2)
+	end)
+	
+	CloseButton.MouseButton1Click:Connect(function()
+		GUI:toggle()
+	end)
+	
+	-- Sidebar for page navigation
+	local Sidebar = Instance.new("Frame")
+	Sidebar.Name = "Sidebar"
+	Sidebar.Position = UDim2.new(0, 0, 0, 65)
+	Sidebar.Size = UDim2.new(0, 180, 1, -65)
+	Sidebar.BackgroundColor3 = Colors.Background
+	Sidebar.BackgroundTransparency = 0.2
+	Sidebar.BorderSizePixel = 0
+	Sidebar.ZIndex = 2
+	Sidebar.Parent = MainFrame
+	
+	local SidebarStroke = CreateStroke(Sidebar, Colors.Accent, 1)
+	SidebarStroke.Transparency = 0.7
+	
+	local SidebarList = Instance.new("UIListLayout")
+	SidebarList.Padding = UDim.new(0, 8)
+	SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
+	SidebarList.Parent = Sidebar
+	
+	local SidebarPadding = Instance.new("UIPadding")
+	SidebarPadding.PaddingTop = UDim.new(0, 15)
+	SidebarPadding.PaddingLeft = UDim.new(0, 10)
+	SidebarPadding.PaddingRight = UDim.new(0, 10)
+	SidebarPadding.Parent = Sidebar
+	
+	-- Content Container
+	local ContentContainer = Instance.new("Frame")
+	ContentContainer.Name = "Content"
+	ContentContainer.Position = UDim2.new(0, 185, 0, 65)
+	ContentContainer.Size = UDim2.new(1, -190, 1, -70)
+	ContentContainer.BackgroundTransparency = 1
+	ContentContainer.BorderSizePixel = 0
+	ContentContainer.ClipsDescendants = true
+	ContentContainer.ZIndex = 2
+	ContentContainer.Parent = MainFrame
+	
+	-- Make draggable
+	local dragging, dragInput, dragStart, startPos
+	
+	TitleBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = MainFrame.Position
+			
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+	
+	TitleBar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+	
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			SmoothTween(MainFrame, {Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)}, 0.15)
+		end
+	end)
+	
+	-- Toggle visibility
+	function GUI:toggle()
+		MainFrame.Visible = not MainFrame.Visible
+	end
+	
+	-- Add Page
+	function GUI:addPage(name, iconId)
+		local Page = {}
+		Page.Name = name
+		Page.Sections = {}
+		
+		-- Page Button in Sidebar
+		local PageButton = Instance.new("TextButton")
+		PageButton.Name = name
+		PageButton.Size = UDim2.new(1, 0, 0, 45)
+		PageButton.BackgroundColor3 = Colors.Glass
+		PageButton.BackgroundTransparency = 0.5
+		PageButton.BorderSizePixel = 0
+		PageButton.Font = Enum.Font.GothamBold
+		PageButton.Text = "  " .. name
+		PageButton.TextColor3 = Colors.TextDim
+		PageButton.TextSize = 14
+		PageButton.TextXAlignment = Enum.TextXAlignment.Left
+		PageButton.Parent = Sidebar
+		CreateCorner(PageButton, 10)
+		
+		local ButtonStroke = CreateStroke(PageButton, Colors.Accent, 1)
+		ButtonStroke.Transparency = 1
+		
+		-- Page Icon
+		local PageIcon = Instance.new("ImageLabel")
+		PageIcon.Position = UDim2.new(1, -35, 0.5, 0)
+		PageIcon.AnchorPoint = Vector2.new(0, 0.5)
+		PageIcon.Size = UDim2.new(0, 25, 0, 25)
+		PageIcon.BackgroundTransparency = 1
+		PageIcon.Image = "rbxassetid://" .. (iconId or 0)
+		PageIcon.ImageColor3 = Colors.TextDim
+		PageIcon.Parent = PageButton
+		
+		-- Page Content Frame
+		local PageFrame = Instance.new("ScrollingFrame")
+		PageFrame.Name = name .. "Page"
+		PageFrame.Size = UDim2.new(1, 0, 1, 0)
+		PageFrame.BackgroundTransparency = 1
+		PageFrame.BorderSizePixel = 0
+		PageFrame.ScrollBarThickness = 6
+		PageFrame.ScrollBarImageColor3 = Colors.Accent
+		PageFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+		PageFrame.Visible = false
+		PageFrame.ZIndex = 3
+		PageFrame.Parent = ContentContainer
+		
+		local PageList = Instance.new("UIListLayout")
+		PageList.Padding = UDim.new(0, 15)
+		PageList.SortOrder = Enum.SortOrder.LayoutOrder
+		PageList.Parent = PageFrame
+		
+		local PagePadding = Instance.new("UIPadding")
+		PagePadding.PaddingTop = UDim.new(0, 10)
+		PagePadding.PaddingLeft = UDim.new(0, 10)
+		PagePadding.PaddingRight = UDim.new(0, 10)
+		PagePadding.PaddingBottom = UDim.new(0, 10)
+		PagePadding.Parent = PageFrame
+		
+		-- Auto-resize canvas
+		PageList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			PageFrame.CanvasSize = UDim2.new(0, 0, 0, PageList.AbsoluteContentSize.Y + 20)
+		end)
+		
+		-- Button hover effects
+		PageButton.MouseEnter:Connect(function()
+			if GUI.CurrentPage ~= Page then
+				SmoothTween(PageButton, {BackgroundTransparency = 0.2}, 0.2)
+				SmoothTween(ButtonStroke, {Transparency = 0.5}, 0.2)
+				SmoothTween(PageIcon, {ImageColor3 = Colors.Accent}, 0.2)
+			end
+		end)
+		
+		PageButton.MouseLeave:Connect(function()
+			if GUI.CurrentPage ~= Page then
+				SmoothTween(PageButton, {BackgroundTransparency = 0.5}, 0.2)
+				SmoothTween(ButtonStroke, {Transparency = 1}, 0.2)
+				SmoothTween(PageIcon, {ImageColor3 = Colors.TextDim}, 0.2)
+			end
+		end)
+		
+		-- Switch to this page
+		PageButton.MouseButton1Click:Connect(function()
+			for _, p in pairs(GUI.Pages) do
+				p.Frame.Visible = false
+				p.Button.BackgroundTransparency = 0.5
+				p.Button.TextColor3 = Colors.TextDim
+				p.ButtonStroke.Transparency = 1
+				p.Icon.ImageColor3 = Colors.TextDim
+			end
+			
+			PageFrame.Visible = true
+			PageButton.BackgroundTransparency = 0
+			PageButton.TextColor3 = Colors.Accent
+			ButtonStroke.Transparency = 0
+			PageIcon.ImageColor3 = Colors.Accent
+			
+			GUI.CurrentPage = Page
+		end)
+		
+		Page.Frame = PageFrame
+		Page.Button = PageButton
+		Page.ButtonStroke = ButtonStroke
+		Page.Icon = PageIcon
+		
+		table.insert(GUI.Pages, Page)
+		
+		-- If first page, make it active
+		if #GUI.Pages == 1 then
+			PageFrame.Visible = true
+			PageButton.BackgroundTransparency = 0
+			PageButton.TextColor3 = Colors.Accent
+			ButtonStroke.Transparency = 0
+			PageIcon.ImageColor3 = Colors.Accent
+			GUI.CurrentPage = Page
+		end
+		
+		-- Add Section
+		function Page:addSection(name)
+			local Section = {}
+			Section.Name = name
+			
+			-- Section Container
+			local SectionFrame = Instance.new("Frame")
+			SectionFrame.Name = name
+			SectionFrame.Size = UDim2.new(1, 0, 0, 50)
+			SectionFrame.BackgroundColor3 = Colors.Glass
+			SectionFrame.BackgroundTransparency = 0.4
+			SectionFrame.BorderSizePixel = 0
+			SectionFrame.AutomaticSize = Enum.AutomaticSize.Y
+			SectionFrame.Parent = PageFrame
+			CreateCorner(SectionFrame, 12)
+			CreateStroke(SectionFrame, Colors.Accent, 1)
+			
+			-- Section glow effect
+			CreateGlow(SectionFrame, Colors.Accent, 0.8)
+			
+			-- Section Title
+			local SectionTitle = Instance.new("TextLabel")
+			SectionTitle.Name = "Title"
+			SectionTitle.Size = UDim2.new(1, 0, 0, 40)
+			SectionTitle.BackgroundTransparency = 1
+			SectionTitle.Font = Enum.Font.GothamBold
+			SectionTitle.Text = name
+			SectionTitle.TextColor3 = Colors.Accent
+			SectionTitle.TextSize = 16
+			SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+			SectionTitle.Parent = SectionFrame
+			
+			local TitlePadding = Instance.new("UIPadding")
+			TitlePadding.PaddingLeft = UDim.new(0, 15)
+			TitlePadding.Parent = SectionTitle
+			
+			-- Section Content
+			local SectionContent = Instance.new("Frame")
+			SectionContent.Name = "Content"
+			SectionContent.Position = UDim2.new(0, 0, 0, 45)
+			SectionContent.Size = UDim2.new(1, 0, 1, -45)
+			SectionContent.BackgroundTransparency = 1
+			SectionContent.AutomaticSize = Enum.AutomaticSize.Y
+			SectionContent.Parent = SectionFrame
+			
+			local ContentList = Instance.new("UIListLayout")
+			ContentList.Padding = UDim.new(0, 10)
+			ContentList.SortOrder = Enum.SortOrder.LayoutOrder
+			ContentList.Parent = SectionContent
+			
+			local ContentPadding = Instance.new("UIPadding")
+			ContentPadding.PaddingTop = UDim.new(0, 5)
+			ContentPadding.PaddingBottom = UDim.new(0, 15)
+			ContentPadding.PaddingLeft = UDim.new(0, 15)
+			ContentPadding.PaddingRight = UDim.new(0, 15)
+			ContentPadding.Parent = SectionContent
+			
+			Section.Frame = SectionFrame
+			Section.Content = SectionContent
+			
+			table.insert(Page.Sections, Section)
+			
+			-- ADD TOGGLE
+			function Section:addToggle(name, default, callback)
+				local ToggleFrame = Instance.new("Frame")
+				ToggleFrame.Name = name
+				ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
+				ToggleFrame.BackgroundColor3 = Colors.BackgroundLight
+				ToggleFrame.BackgroundTransparency = 0.3
+				ToggleFrame.BorderSizePixel = 0
+				ToggleFrame.Parent = SectionContent
+				CreateCorner(ToggleFrame, 8)
+				
+				local ToggleLabel = Instance.new("TextLabel")
+				ToggleLabel.Size = UDim2.new(1, -60, 1, 0)
+				ToggleLabel.Position = UDim2.new(0, 12, 0, 0)
+				ToggleLabel.BackgroundTransparency = 1
+				ToggleLabel.Font = Enum.Font.Gotham
+				ToggleLabel.Text = name
+				ToggleLabel.TextColor3 = Colors.Text
+				ToggleLabel.TextSize = 14
+				ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+				ToggleLabel.Parent = ToggleFrame
+				
+				local ToggleButton = Instance.new("TextButton")
+				ToggleButton.Position = UDim2.new(1, -50, 0.5, 0)
+				ToggleButton.AnchorPoint = Vector2.new(0, 0.5)
+				ToggleButton.Size = UDim2.new(0, 45, 0, 24)
+				ToggleButton.BackgroundColor3 = default and Colors.Accent or Colors.TextDim
+				ToggleButton.BackgroundTransparency = 0
+				ToggleButton.BorderSizePixel = 0
+				ToggleButton.Text = ""
+				ToggleButton.Parent = ToggleFrame
+				CreateCorner(ToggleButton, 12)
+				CreateGlow(ToggleButton, default and Colors.Accent or Colors.TextDim, 1)
+				
+				local ToggleIndicator = Instance.new("Frame")
+				ToggleIndicator.Position = default and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+				ToggleIndicator.AnchorPoint = Vector2.new(0, 0.5)
+				ToggleIndicator.Size = UDim2.new(0, 20, 0, 20)
+				ToggleIndicator.BackgroundColor3 = Colors.Text
+				ToggleIndicator.BorderSizePixel = 0
+				ToggleIndicator.Parent = ToggleButton
+				CreateCorner(ToggleIndicator, 10)
+				
+				local toggled = default
+				
+				ToggleButton.MouseButton1Click:Connect(function()
+					toggled = not toggled
+					
+					SmoothTween(ToggleButton, {
+						BackgroundColor3 = toggled and Colors.Accent or Colors.TextDim
+					}, 0.3)
+					
+					SmoothTween(ToggleIndicator, {
+						Position = toggled and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 2, 0.5, 0)
+					}, 0.3, Enum.EasingStyle.Back)
+					
+					-- Update glow
+					local glow = ToggleButton:FindFirstChild("Glow")
+					if glow then
+						SmoothTween(glow, {
+							ImageColor3 = toggled and Colors.Accent or Colors.TextDim
+						}, 0.3)
+					end
+					
+					pcall(callback, toggled)
+				end)
+				
+				return ToggleButton
+			end
+			
+			-- ADD SLIDER
+			function Section:addSlider(name, default, min, max, callback)
+				local SliderFrame = Instance.new("Frame")
+				SliderFrame.Name = name
+				SliderFrame.Size = UDim2.new(1, 0, 0, 55)
+				SliderFrame.BackgroundColor3 = Colors.BackgroundLight
+				SliderFrame.BackgroundTransparency = 0.3
+				SliderFrame.BorderSizePixel = 0
+				SliderFrame.Parent = SectionContent
+				CreateCorner(SliderFrame, 8)
+				
+				local SliderLabel = Instance.new("TextLabel")
+				SliderLabel.Size = UDim2.new(0.6, 0, 0, 20)
+				SliderLabel.Position = UDim2.new(0, 12, 0, 8)
+				SliderLabel.BackgroundTransparency = 1
+				SliderLabel.Font = Enum.Font.Gotham
+				SliderLabel.Text = name
+				SliderLabel.TextColor3 = Colors.Text
+				SliderLabel.TextSize = 14
+				SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+				SliderLabel.Parent = SliderFrame
+				
+				local ValueLabel = Instance.new("TextLabel")
+				ValueLabel.Size = UDim2.new(0.4, -12, 0, 20)
+				ValueLabel.Position = UDim2.new(0.6, 0, 0, 8)
+				ValueLabel.BackgroundTransparency = 1
+				ValueLabel.Font = Enum.Font.GothamBold
+				ValueLabel.Text = tostring(default)
+				ValueLabel.TextColor3 = Colors.Accent
+				ValueLabel.TextSize = 14
+				ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+				ValueLabel.Parent = SliderFrame
+				
+				local SliderBar = Instance.new("Frame")
+				SliderBar.Position = UDim2.new(0, 12, 1, -20)
+				SliderBar.Size = UDim2.new(1, -24, 0, 6)
+				SliderBar.BackgroundColor3 = Colors.Glass
+				SliderBar.BorderSizePixel = 0
+				SliderBar.Parent = SliderFrame
+				CreateCorner(SliderBar, 3)
+				
+				local SliderFill = Instance.new("Frame")
+				SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+				SliderFill.BackgroundColor3 = Colors.Accent
+				SliderFill.BorderSizePixel = 0
+				SliderFill.Parent = SliderBar
+				CreateCorner(SliderFill, 3)
+				CreateGlow(SliderFill, Colors.Accent, 1)
+				
+				local SliderButton = Instance.new("TextButton")
+				SliderButton.Position = UDim2.new((default - min) / (max - min), -6, 0.5, 0)
+				SliderButton.AnchorPoint = Vector2.new(0, 0.5)
+				SliderButton.Size = UDim2.new(0, 16, 0, 16)
+				SliderButton.BackgroundColor3 = Colors.Accent
+				SliderButton.BorderSizePixel = 0
+				SliderButton.Text = ""
+				SliderButton.ZIndex = 5
+				SliderButton.Parent = SliderBar
+				CreateCorner(SliderButton, 8)
+				CreateStroke(SliderButton, Colors.Text, 2)
+				CreateGlow(SliderButton, Colors.Accent, 1.5)
+				
+				local dragging = false
+				local value = default
+				
+				SliderButton.MouseButton1Down:Connect(function()
+					dragging = true
+					SmoothTween(SliderButton, {Size = UDim2.new(0, 20, 0, 20)}, 0.2)
+				end)
+				
+				UserInputService.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging = false
+						SmoothTween(SliderButton, {Size = UDim2.new(0, 16, 0, 16)}, 0.2)
+					end
+				end)
+				
+				SliderBar.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						dragging = true
+						SmoothTween(SliderButton, {Size = UDim2.new(0, 20, 0, 20)}, 0.2)
+					end
+				end)
+				
+				UserInputService.InputChanged:Connect(function(input)
+					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+						local relativePos = math.clamp((input.Position.X - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+						value = math.floor(min + (max - min) * relativePos)
+						
+						ValueLabel.Text = tostring(value)
+						SliderFill.Size = UDim2.new(relativePos, 0, 1, 0)
+						SliderButton.Position = UDim2.new(relativePos, -6, 0.5, 0)
+						
+						pcall(callback, value)
+					end
+				end)
+				
+				return SliderButton
+			end
+			
+			-- ADD BUTTON
+			function Section:addButton(name, callback)
+				local Button = Instance.new("TextButton")
+				Button.Name = name
+				Button.Size = UDim2.new(1, 0, 0, 40)
+				Button.BackgroundColor3 = Colors.Accent
+				Button.BackgroundTransparency = 0.2
+				Button.BorderSizePixel = 0
+				Button.Font = Enum.Font.GothamBold
+				Button.Text = name
+				Button.TextColor3 = Colors.Text
+				Button.TextSize = 14
+				Button.Parent = SectionContent
+				CreateCorner(Button, 8)
+				CreateStroke(Button, Colors.Accent, 2)
+				CreateGlow(Button, Colors.Accent, 1.2)
+				
+				Button.MouseEnter:Connect(function()
+					SmoothTween(Button, {BackgroundTransparency = 0, BackgroundColor3 = Colors.Secondary}, 0.2)
+					local glow = Button:FindFirstChild("Glow")
+					if glow then
+						SmoothTween(glow, {ImageColor3 = Colors.Secondary, ImageTransparency = 0.3}, 0.2)
+					end
+				end)
+				
+				Button.MouseLeave:Connect(function()
+					SmoothTween(Button, {BackgroundTransparency = 0.2, BackgroundColor3 = Colors.Accent}, 0.2)
+					local glow = Button:FindFirstChild("Glow")
+					if glow then
+						SmoothTween(glow, {ImageColor3 = Colors.Accent, ImageTransparency = 0.5}, 0.2)
+					end
+				end)
+				
+				Button.MouseButton1Click:Connect(function()
+					-- Click animation
+					SmoothTween(Button, {Size = UDim2.new(1, 0, 0, 35)}, 0.1)
+					task.wait(0.1)
+					SmoothTween(Button, {Size = UDim2.new(1, 0, 0, 40)}, 0.1)
+					
+					pcall(callback)
+				end)
+				
+				return Button
+			end
+			
+			-- ADD KEYBIND
+			function Section:addKeybind(name, default, callback, changeCallback)
+				local KeybindFrame = Instance.new("Frame")
+				KeybindFrame.Name = name
+				KeybindFrame.Size = UDim2.new(1, 0, 0, 40)
+				KeybindFrame.BackgroundColor3 = Colors.BackgroundLight
+				KeybindFrame.BackgroundTransparency = 0.3
+				KeybindFrame.BorderSizePixel = 0
+				KeybindFrame.Parent = SectionContent
+				CreateCorner(KeybindFrame, 8)
+				
+				local KeybindLabel = Instance.new("TextLabel")
+				KeybindLabel.Size = UDim2.new(1, -90, 1, 0)
+				KeybindLabel.Position = UDim2.new(0, 12, 0, 0)
+				KeybindLabel.BackgroundTransparency = 1
+				KeybindLabel.Font = Enum.Font.Gotham
+				KeybindLabel.Text = name
+				KeybindLabel.TextColor3 = Colors.Text
+				KeybindLabel.TextSize = 14
+				KeybindLabel.TextXAlignment = Enum.TextXAlignment.Left
+				KeybindLabel.Parent = KeybindFrame
+				
+				local KeybindButton = Instance.new("TextButton")
+				KeybindButton.Position = UDim2.new(1, -75, 0.5, 0)
+				KeybindButton.AnchorPoint = Vector2.new(0, 0.5)
+				KeybindButton.Size = UDim2.new(0, 70, 0, 28)
+				KeybindButton.BackgroundColor3 = Colors.Glass
+				KeybindButton.BackgroundTransparency = 0.2
+				KeybindButton.BorderSizePixel = 0
+				KeybindButton.Font = Enum.Font.GothamBold
+				KeybindButton.Text = default.Name:gsub("Enum.KeyCode.", "")
+				KeybindButton.TextColor3 = Colors.Accent
+				KeybindButton.TextSize = 12
+				KeybindButton.Parent = KeybindFrame
+				CreateCorner(KeybindButton, 6)
+				CreateStroke(KeybindButton, Colors.Accent, 1)
+				
+				local listening = false
+				local currentKey = default
+				
+				KeybindButton.MouseButton1Click:Connect(function()
+					if listening then return end
+					listening = true
+					KeybindButton.Text = "..."
+					KeybindButton.TextColor3 = Colors.Secondary
+					
+					local connection
+					connection = UserInputService.InputBegan:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.Keyboard then
+							currentKey = input.KeyCode
+							KeybindButton.Text = input.KeyCode.Name:gsub("Enum.KeyCode.", "")
+							KeybindButton.TextColor3 = Colors.Accent
+							listening = false
+							connection:Disconnect()
+							
+							if changeCallback then
+								pcall(changeCallback, input)
+							end
+						end
+					end)
+				end)
+				
+				-- Listen for the keybind
+				UserInputService.InputBegan:Connect(function(input)
+					if input.KeyCode == currentKey and not listening then
+						pcall(callback)
+					end
+				end)
+				
+				return KeybindButton
+			end
+			
+			-- ADD DROPDOWN
+			function Section:addDropdown(name, options, callback)
+				local DropdownFrame = Instance.new("Frame")
+				DropdownFrame.Name = name
+				DropdownFrame.Size = UDim2.new(1, 0, 0, 40)
+				DropdownFrame.BackgroundColor3 = Colors.BackgroundLight
+				DropdownFrame.BackgroundTransparency = 0.3
+				DropdownFrame.BorderSizePixel = 0
+				DropdownFrame.ClipsDescendants = true
+				DropdownFrame.Parent = SectionContent
+				CreateCorner(DropdownFrame, 8)
+				
+				local DropdownLabel = Instance.new("TextLabel")
+				DropdownLabel.Size = UDim2.new(1, -40, 0, 40)
+				DropdownLabel.Position = UDim2.new(0, 12, 0, 0)
+				DropdownLabel.BackgroundTransparency = 1
+				DropdownLabel.Font = Enum.Font.Gotham
+				DropdownLabel.Text = name
+				DropdownLabel.TextColor3 = Colors.Text
+				DropdownLabel.TextSize = 14
+				DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+				DropdownLabel.Parent = DropdownFrame
+				
+				local DropdownButton = Instance.new("TextButton")
+				DropdownButton.Position = UDim2.new(1, -35, 0, 5)
+				DropdownButton.Size = UDim2.new(0, 30, 0, 30)
+				DropdownButton.BackgroundColor3 = Colors.Glass
+				DropdownButton.BorderSizePixel = 0
+				DropdownButton.Font = Enum.Font.GothamBold
+				DropdownButton.Text = "▼"
+				DropdownButton.TextColor3 = Colors.Accent
+				DropdownButton.TextSize = 12
+				DropdownButton.Parent = DropdownFrame
+				CreateCorner(DropdownButton, 6)
+				
+				local OptionsList = Instance.new("Frame")
+				OptionsList.Position = UDim2.new(0, 0, 0, 45)
+				OptionsList.Size = UDim2.new(1, 0, 0, 0)
+				OptionsList.BackgroundTransparency = 1
+				OptionsList.AutomaticSize = Enum.AutomaticSize.Y
+				OptionsList.Visible = false
+				OptionsList.Parent = DropdownFrame
+				
+				local OptionsLayout = Instance.new("UIListLayout")
+				OptionsLayout.Padding = UDim.new(0, 5)
+				OptionsLayout.Parent = OptionsList
+				
+				local expanded = false
+				
+				DropdownButton.MouseButton1Click:Connect(function()
+					expanded = not expanded
+					OptionsList.Visible = expanded
+					
+					SmoothTween(DropdownFrame, {
+						Size = expanded and UDim2.new(1, 0, 0, 50 + #options * 35) or UDim2.new(1, 0, 0, 40)
+					}, 0.3, Enum.EasingStyle.Back)
+					
+					SmoothTween(DropdownButton, {
+						Rotation = expanded and 180 or 0
+					}, 0.3)
+				end)
+				
+				for _, option in ipairs(options) do
+					local OptionButton = Instance.new("TextButton")
+					OptionButton.Size = UDim2.new(1, -24, 0, 30)
+					OptionButton.Position = UDim2.new(0, 12, 0, 0)
+					OptionButton.BackgroundColor3 = Colors.Glass
+					OptionButton.BackgroundTransparency = 0.5
+					OptionButton.BorderSizePixel = 0
+					OptionButton.Font = Enum.Font.Gotham
+					OptionButton.Text = option
+					OptionButton.TextColor3 = Colors.Text
+					OptionButton.TextSize = 13
+					OptionButton.Parent = OptionsList
+					CreateCorner(OptionButton, 6)
+					
+					OptionButton.MouseEnter:Connect(function()
+						SmoothTween(OptionButton, {BackgroundColor3 = Colors.Accent, BackgroundTransparency = 0.3}, 0.2)
+					end)
+					
+					OptionButton.MouseLeave:Connect(function()
+						SmoothTween(OptionButton, {BackgroundColor3 = Colors.Glass, BackgroundTransparency = 0.5}, 0.2)
+					end)
+					
+					OptionButton.MouseButton1Click:Connect(function()
+						pcall(callback, option)
+						expanded = false
+						OptionsList.Visible = false
+						SmoothTween(DropdownFrame, {Size = UDim2.new(1, 0, 0, 40)}, 0.3)
+						SmoothTween(DropdownButton, {Rotation = 0}, 0.3)
+					end)
+				end
+				
+				return DropdownFrame
+			end
+			
+			return Section
+		end
+		
+		return Page
+	end
+	
+	-- Entrance animation
+	MainFrame.Size = UDim2.new(0, 0, 0, 0)
+	SmoothTween(MainFrame, {Size = UDim2.new(0, 700, 0, 500)}, 0.5, Enum.EasingStyle.Back)
+	
+	return GUI
+end
+
+function Library.setTheme(self, index, value)
+	-- Theme compatibility (for legacy code)
+	if Colors[index] then
+		Colors[index] = value
+	end
+end
+
+-- ============================================
+-- VEHICLE MOD SCRIPT STARTS HERE
+-- ============================================
+
+local VenyxLibrary = Library
+local Venyx = VenyxLibrary.new("DDRS CUSTOMS • VEHICLE MOD", 5013109572)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
-
-local Theme = {
-	Background = Color3.fromRGB(201, 24, 28), 
-	Glow = Color3.fromRGB(185, 26, 29), 
-	Accent = Color3.fromRGB(201, 24, 28), 
-	LightContrast = Color3.fromRGB(154, 30, 33), 
-	DarkContrast = Color3.fromRGB(185, 26, 29),  
-	TextColor = Color3.fromRGB(255, 255, 255)
-}
-
-for index, value in pairs(Theme) do
-	pcall(Venyx.setTheme, Venyx, index, value)
-end
 
 local function GetVehicleFromDescendant(Descendant)
 	return
@@ -39,18 +910,27 @@ local function TeleportVehicle(CoordinateFrame: CFrame)
 	end
 end
 
-
+-- ============ VEHICLE PAGE ============
 local vehiclePage = Venyx:addPage("Vehicle", 8356815386)
-local usageSection = vehiclePage:addSection("Usage")
-local velocityEnabled = true;
+local usageSection = vehiclePage:addSection("⚙️ Usage")
+local velocityEnabled = true
 usageSection:addToggle("Keybinds Active", velocityEnabled, function(v) velocityEnabled = v end)
-local flightSection = vehiclePage:addSection("Flight")
+
+-- ============ FLIGHT SECTION (FIXED) ============
+local flightSection = vehiclePage:addSection("✈️ Flight Mode")
 local flightEnabled = false
 local flightSpeed = 1
-flightSection:addToggle("Enabled", false, function(v) flightEnabled = v end)
-flightSection:addSlider("Speed", 100, 0, 800, function(v) flightSpeed = v / 100 end)
-local defaultCharacterParent 
-RunService.Stepped:Connect(function()
+flightSection:addToggle("Enable Flight", false, function(v) flightEnabled = v end)
+flightSection:addSlider("Flight Speed", 100, 0, 800, function(v) flightSpeed = v / 100 end)
+
+local defaultCharacterParent
+local flightConnection
+
+if flightConnection then
+	flightConnection:Disconnect()
+end
+
+flightConnection = RunService.Stepped:Connect(function()
 	local Character = LocalPlayer.Character
 	if flightEnabled == true then
 		if Character and typeof(Character) == "Instance" then
@@ -83,16 +963,34 @@ RunService.Stepped:Connect(function()
 		end
 	end
 end)
-local speedSection = vehiclePage:addSection("Acceleration")
-local velocityMult = 0.025;
-speedSection:addSlider("Multiplier (Thousandths)", 25, 0, 50, function(v) velocityMult = v / 1000; end)
-local velocityEnabledKeyCode = Enum.KeyCode.W;
-speedSection:addKeybind("Velocity Enabled", velocityEnabledKeyCode, function()
+
+-- ============ ACCELERATION SECTION (FIXED) ============
+local speedSection = vehiclePage:addSection("🚀 Acceleration")
+local velocityMult = 0.025
+speedSection:addSlider("Speed Multiplier", 25, 0, 50, function(v) velocityMult = v / 1000 end)
+
+local velocityEnabledKeyCode = Enum.KeyCode.W
+local velocityConnection
+
+speedSection:addKeybind("Boost Key", velocityEnabledKeyCode, function()
 	if not velocityEnabled then
 		return
 	end
-	while UserInputService:IsKeyDown(velocityEnabledKeyCode) do
-		task.wait(0)
+	
+	if velocityConnection then
+		velocityConnection:Disconnect()
+		velocityConnection = nil
+	end
+	
+	velocityConnection = RunService.Heartbeat:Connect(function()
+		if not UserInputService:IsKeyDown(velocityEnabledKeyCode) or not velocityEnabled then
+			if velocityConnection then
+				velocityConnection:Disconnect()
+				velocityConnection = nil
+			end
+			return
+		end
+		
 		local Character = LocalPlayer.Character
 		if Character and typeof(Character) == "Instance" then
 			local Humanoid = Character:FindFirstChildWhichIsA("Humanoid")
@@ -103,21 +1001,36 @@ speedSection:addKeybind("Velocity Enabled", velocityEnabledKeyCode, function()
 				end
 			end
 		end
-		if not velocityEnabled then
-			break
-		end
-	end
+	end)
 end, function(v) velocityEnabledKeyCode = v.KeyCode end)
-local decelerateSelection = vehiclePage:addSection("Deceleration")
+
+-- ============ DECELERATION SECTION (FIXED) ============
+local decelerateSelection = vehiclePage:addSection("🛑 Braking System")
 local qbEnabledKeyCode = Enum.KeyCode.S
 local velocityMult2 = 150e-3
-decelerateSelection:addSlider("Brake Force (Thousandths)", velocityMult2*1e3, 0, 300, function(v) velocityMult2 = v / 1000; end)
-decelerateSelection:addKeybind("Quick Brake Enabled", qbEnabledKeyCode, function()
+local brakeConnection
+
+decelerateSelection:addSlider("Brake Force", velocityMult2 * 1e3, 0, 300, function(v) velocityMult2 = v / 1000 end)
+
+decelerateSelection:addKeybind("Brake Key", qbEnabledKeyCode, function()
 	if not velocityEnabled then
 		return
 	end
-	while UserInputService:IsKeyDown(qbEnabledKeyCode) do
-		task.wait(0)
+	
+	if brakeConnection then
+		brakeConnection:Disconnect()
+		brakeConnection = nil
+	end
+	
+	brakeConnection = RunService.Heartbeat:Connect(function()
+		if not UserInputService:IsKeyDown(qbEnabledKeyCode) or not velocityEnabled then
+			if brakeConnection then
+				brakeConnection:Disconnect()
+				brakeConnection = nil
+			end
+			return
+		end
+		
 		local Character = LocalPlayer.Character
 		if Character and typeof(Character) == "Instance" then
 			local Humanoid = Character:FindFirstChildWhichIsA("Humanoid")
@@ -128,12 +1041,10 @@ decelerateSelection:addKeybind("Quick Brake Enabled", qbEnabledKeyCode, function
 				end
 			end
 		end
-		if not velocityEnabled then
-			break
-		end
-	end
+	end)
 end, function(v) qbEnabledKeyCode = v.KeyCode end)
-decelerateSelection:addKeybind("Stop the Vehicle", Enum.KeyCode.P, function(v)
+
+decelerateSelection:addKeybind("Emergency Stop", Enum.KeyCode.P, function(v)
 	if not velocityEnabled then
 		return
 	end
@@ -143,14 +1054,16 @@ decelerateSelection:addKeybind("Stop the Vehicle", Enum.KeyCode.P, function(v)
 		if Humanoid and typeof(Humanoid) == "Instance" then
 			local SeatPart = Humanoid.SeatPart
 			if SeatPart and typeof(SeatPart) == "Instance" and SeatPart:IsA("VehicleSeat") then
-				SeatPart.AssemblyLinearVelocity *= Vector3.new(0, 0, 0)
-				SeatPart.AssemblyAngularVelocity *= Vector3.new(0, 0, 0)
+				SeatPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+				SeatPart.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
 			end
 		end
 	end
 end)
-local springSection = vehiclePage:addSection("Springs")
-springSection:addToggle("Visible", true, function(v)
+
+-- ============ SPRINGS SECTION ============
+local springSection = vehiclePage:addSection("🔧 Suspension")
+springSection:addToggle("Show Springs", true, function(v)
 	local Character = LocalPlayer.Character
 	if Character and typeof(Character) == "Instance" then
 		local Humanoid = Character:FindFirstChildWhichIsA("Humanoid")
@@ -167,55 +1080,85 @@ springSection:addToggle("Visible", true, function(v)
 		end
 	end
 end)
+
+-- ============ GAME-SPECIFIC PAGES ============
 repeat
-	task.wait(0)
+	task.wait(0.1)
 until game:IsLoaded() and game.PlaceId > 0
+
 if game.PlaceId == 3351674303 then
 	local drivingEmpirePage = Venyx:addPage("Wayfort", 8357222903)
-	local dealershipSection = drivingEmpirePage:addSection("Vehicle Dealership")
+	local dealershipSection = drivingEmpirePage:addSection("🏪 Dealerships")
 	local dealershipList = {}
 	for index, value in pairs(workspace:WaitForChild("Game"):WaitForChild("Dealerships"):WaitForChild("Dealerships"):GetChildren()) do
 		table.insert(dealershipList, value.Name)
 	end
-	dealershipSection:addDropdown("Dealership", dealershipList, function(v)
+	dealershipSection:addDropdown("Select Dealership", dealershipList, function(v)
 		game:GetService("ReplicatedStorage").Remotes.Location:FireServer("Enter", v)
 	end)
+	
 elseif game.PlaceId == 891852901 then
 	local greenvillePage = Venyx:addPage("Greenville", 8360925727)
-    local greenvilleSection = greenvillePage:addSection("Teleports")
+	local greenvilleSection = greenvillePage:addSection("📍 Teleports")
 
-greenvilleSection:addButton("Teleport to dealership", function()
-    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1579.4249267578125, -78.44871520996094, -11402.23828125)
-end)
-    greenvilleSection:addButton("Teleport to Drag Race Airport", function()
-    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(5141.60205078125, -78.85209655761719, -8920.84765625)
-end)
+	greenvilleSection:addButton("🏢 Dealership", function()
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1579.4249267578125, -78.44871520996094, -11402.23828125)
+		end
+	end)
+	
+	greenvilleSection:addButton("✈️ Drag Race Airport", function()
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(5141.60205078125, -78.85209655761719, -8920.84765625)
+		end
+	end)
 
-greenvilleSection:addButton("Teleport to Gas Station Burger Knight", function()
-    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(4343.11181640625, -78.70198059082031, -10984.560546875)
-end)
+	greenvilleSection:addButton("🍔 Burger Knight Gas", function()
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(4343.11181640625, -78.70198059082031, -10984.560546875)
+		end
+	end)
 
-greenvilleSection:addButton("Teleport to Tires Plus", function()
-    LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(4035.7548828125, -78.8255844116211, -11537.9189453125)
-end)
+	greenvilleSection:addButton("🔧 Tires Plus", function()
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(4035.7548828125, -78.8255844116211, -11537.9189453125)
+		end
+	end)
+	
 elseif game.PlaceId == 54865335 then
 	local ultimateDrivingPage = Venyx:addPage("Westover", 8360954483)
+	local westoverSection = ultimateDrivingPage:addSection("📍 Locations")
+	westoverSection:addButton("Coming Soon", function() end)
+	
 elseif game.PlaceId == 5232896677 then
 	local pacificoPage = Venyx:addPage("Pacifico", 3028235557)
+	local pacificoSection = pacificoPage:addSection("📍 Locations")
+	pacificoSection:addButton("Coming Soon", function() end)
 end
-local infoPage = Venyx:addPage("Information", 8356778308)
-local toggleSection = infoPage:addSection("Menu Toggle")
-toggleSection:addToggle("Show/Hide Menu with Left Control", true, function(v)
-    if v then
-        UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-            if input.KeyCode == Enum.KeyCode.LeftControl and not gameProcessedEvent then
-                Venyx:toggle()
-            end
-        end)
-    end
+
+-- ============ INFO PAGE (FIXED) ============
+local infoPage = Venyx:addPage("Info", 8356778308)
+local toggleSection = infoPage:addSection("⚙️ Menu Settings")
+
+local menuToggleConnection
+
+toggleSection:addToggle("Toggle with Left CTRL", true, function(v)
+	if menuToggleConnection then
+		menuToggleConnection:Disconnect()
+		menuToggleConnection = nil
+	end
+	
+	if v then
+		menuToggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+			if input.KeyCode == Enum.KeyCode.LeftControl and not gameProcessedEvent then
+				Venyx:toggle()
+			end
+		end)
+	end
 end)
-local discordSection = infoPage:addSection("Discord")
-discordSection:addButton(syn and "Join the Discord server" or "Copy Discord Link", function()
+
+local creditsSection = infoPage:addSection("👥 Credits")
+creditsSection:addButton("💬 Join Discord", function()
 	if syn then
 		syn.request({
 			Url = "http://127.0.0.1:6463/rpc?v=1",
@@ -237,13 +1180,38 @@ discordSection:addButton(syn and "Join the Discord server" or "Copy Discord Link
 	setclipboard("https://discord.gg/Hrg3MKJrCJ")
 end)
 
+creditsSection:addButton("⭐ Created by DDRS", function()
+	setclipboard("DDRS CUSTOMS")
+end)
+
+-- ============ CLOSE GUI KEYBIND (FIXED) ============
+local closeGUIConnection
 
 local function CloseGUI()
-    Venyx:toggle()
+	Venyx:toggle()
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if not gameProcessedEvent and input.KeyCode == Enum.KeyCode.RightBracket then
-        CloseGUI()
-    end
+if closeGUIConnection then
+	closeGUIConnection:Disconnect()
+end
+
+closeGUIConnection = UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+	if not gameProcessedEvent and input.KeyCode == Enum.KeyCode.RightBracket then
+		CloseGUI()
+	end
 end)
+
+-- ============ CLEANUP ON SCRIPT END ============
+game:GetService("Players").PlayerRemoving:Connect(function(player)
+	if player == LocalPlayer then
+		if flightConnection then flightConnection:Disconnect() end
+		if velocityConnection then velocityConnection:Disconnect() end
+		if brakeConnection then brakeConnection:Disconnect() end
+		if menuToggleConnection then menuToggleConnection:Disconnect() end
+		if closeGUIConnection then closeGUIConnection:Disconnect() end
+	end
+end)
+
+print("🔥 DDRS CUSTOMS • Vehicle Mod loaded successfully!")
+print("🎨 Ultra Modern UI Edition")
+print("⌨️ Press Left CTRL to toggle menu")
